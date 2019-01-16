@@ -1,0 +1,13 @@
+[package]
+name = "puma_os"
+version = "0.1.0"
+authors = ["Jamin Menter <jaminmenter@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+panic = "abort"
