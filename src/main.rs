@@ -11,7 +11,8 @@ fn panic(_info: &PanicInfo) -> ! {
 
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
-    vga_buffer::print_test_message();
+    println!("Welcome to Puma OS");
+    println!("Version {}.{}.{}", 0, 0, 1);
 
     loop {}
 }
