@@ -3,6 +3,8 @@
 #![cfg_attr(test, allow(unused_imports))]
 
 mod vga_buffer;
+mod serial;
+
 use core::panic::PanicInfo;
 
 #[cfg(not(test))]
