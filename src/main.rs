@@ -1,11 +1,9 @@
 #![cfg_attr(not(test), no_std)]
 #![cfg_attr(not(test), no_main)]
-#![cfg_attr(test, allow(unused_imports))]
-
-mod vga_buffer;
-mod serial;
+#![cfg_attr(test, allow(dead_code, unused_macros, unused_imports))]
 
 use core::panic::PanicInfo;
+use puma_os::println;
 
 #[cfg(not(test))]
 #[panic_handler]
