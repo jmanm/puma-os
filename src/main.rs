@@ -18,5 +18,9 @@ pub extern "C" fn _start() -> ! {
     println!("Welcome to Puma OS");
     println!("Version {}.{}.{}", 0, 0, 1);
 
+    puma_os::interrupts::init_idt();
+    x86_64::instructions::int3();
+    println!("Yahoo!");
+
     loop {}
 }
