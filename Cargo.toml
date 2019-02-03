@@ -7,6 +7,7 @@ edition = "2018"
 [dependencies]
 array-init = "0.0.3"
 bootloader = "0.3.12"
+pic8259_simple = "0.1.1"
 spin = "0.4.9"
 uart_16550 = "0.1.0"
 volatile = "0.2.3"

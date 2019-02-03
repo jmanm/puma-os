@@ -15,11 +15,15 @@ fn panic(info: &PanicInfo) -> ! {
 #[cfg(not(test))]
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
+    use puma_os::interrupts::PICS;
+
     println!("Welcome to Puma OS");
     println!("Version {}.{}.{}", 0, 0, 1);
 
     puma_os::gdt::init();
     puma_os::interrupts::init_idt();
+    unsafe { PICS.lock().initialize() };
+    x86_64::instructions::interrupts::enable();
     
     loop {}
 }
