@@ -9,7 +9,7 @@ use puma_os::println;
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
     println!("{}", info);
-    loop {}
+    puma_os::hlt_loop();
 }
 
 #[cfg(not(test))]
@@ -25,5 +25,5 @@ pub extern "C" fn _start() -> ! {
     unsafe { PICS.lock().initialize() };
     x86_64::instructions::interrupts::enable();
     
-    loop {}
+    puma_os::hlt_loop();
 }

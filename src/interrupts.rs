@@ -50,7 +50,7 @@ extern "x86-interrupt" fn double_fault_handler(
     stack_frame: &mut ExceptionStackFrame, _error_code: u64)
 {
     println!("EXCEPTION: DOUBLE FAULT\n{:#?}", stack_frame);
-    loop {}
+    crate::hlt_loop();
 }
 
 extern "x86-interrupt" fn timer_interrupt_handler(
