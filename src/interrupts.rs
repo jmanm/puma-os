@@ -1,7 +1,11 @@
 use lazy_static::lazy_static;
 use pic8259_simple::ChainedPics;
 use spin;
-use x86_64::structures::idt::{InterruptDescriptorTable, ExceptionStackFrame};
+use x86_64::structures::idt::{
+    ExceptionStackFrame,
+    InterruptDescriptorTable,
+    PageFaultErrorCode
+};
 
 use crate::print;
 use crate::println;
@@ -25,6 +29,9 @@ lazy_static! {
                 .set_handler_fn(double_fault_handler)
                 .set_stack_index(gdt::DOUBLE_FAULT_IST_INDEX);
         }
+
+        //page fault
+        idt.page_fault.set_handler_fn(page_fault_handler);
 
         //timer
         idt[usize::from(TIMER_INTERRUPT_ID)]
@@ -56,6 +63,19 @@ extern "x86-interrupt" fn double_fault_handler(
 {
     println!("EXCEPTION: DOUBLE FAULT\n{:#?}", stack_frame);
     crate::hlt_loop();
+}
+
+extern "x86-interrupt" fn page_fault_handler(
+    stack_frame: &mut ExceptionStackFrame,
+    _error_code: PageFaultErrorCode)
+{
+    use crate::hlt_loop;
+    use x86_64::registers::control::Cr2;
+
+    println!("EXCEPTION:  PAGE FAULT");
+    println!("Accessed address:  {:?}", Cr2::read());
+    println!("{:#?}", stack_frame);
+    hlt_loop();
 }
 
 extern "x86-interrupt" fn timer_interrupt_handler(
