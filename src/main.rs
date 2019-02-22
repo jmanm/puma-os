@@ -28,10 +28,13 @@ pub extern "C" fn _start() -> ! {
     unsafe { PICS.lock().initialize() };
     x86_64::instructions::interrupts::enable();
 
-    use puma_os::memory::translate_addr;
-    println!("0xb8000 -> {:?}", translate_addr(0xb8000));
-    println!("0x20010a -> {:?}", translate_addr(0x20010a));
-    println!("0x57ac001ffe48 -> {:?}", translate_addr(0x57ac001ffe48));
+    use puma_os::memory::{self, translate_addr};
+    const L4_TABLE_ADDR: usize = 0o177777_777_777_777_777_0000;
+    let rpt = unsafe { memory::init(L4_TABLE_ADDR) };
+    println!("0xb8000 -> {:?}", translate_addr(0xb8000, &rpt));
+    println!("0x20010a -> {:?}", translate_addr(0x20010a, &rpt));
+    println!("0x57ac001ffe48 -> {:?}", translate_addr(0x57ac001ffe48, &rpt));
+    println!("0x1234567890 -> {:?}", translate_addr(0x1234567890, &rpt));
 
     puma_os::hlt_loop();
 }
