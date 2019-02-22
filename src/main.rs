@@ -28,5 +28,10 @@ pub extern "C" fn _start() -> ! {
     unsafe { PICS.lock().initialize() };
     x86_64::instructions::interrupts::enable();
 
+    use puma_os::memory::translate_addr;
+    println!("0xb8000 -> {:?}", translate_addr(0xb8000));
+    println!("0x20010a -> {:?}", translate_addr(0x20010a));
+    println!("0x57ac001ffe48 -> {:?}", translate_addr(0x57ac001ffe48));
+
     puma_os::hlt_loop();
 }
