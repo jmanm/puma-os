@@ -1,34 +1,73 @@
-# Puma OS
+# Blog OS (Paging Implementation)
 
-Following along the amazing blog by Philipp Oppermann.
+[![Build Status](https://github.com/phil-opp/blog_os/workflows/Build%20Code/badge.svg?branch=post-09)](https://github.com/phil-opp/blog_os/actions?query=workflow%3A%22Build+Code%22+branch%3Apost-09)
 
-https://os.phil-opp.com/
+This repository contains the source code for the [Paging Implementation][post] post of the [Writing an OS in Rust](https://os.phil-opp.com) series.
 
-## Prerequisites
+[post]: https://os.phil-opp.com/paging-implementation/
 
-* Rustup
-* QEMU
-
-## Make sure the compiler is set to the 'nightly' version
-
-```
-> rustup override add nightly
-```
+**Check out the [master branch](https://github.com/phil-opp/blog_os) for more information.**
 
 ## Building
 
-bootimage must be installed first
+You need a nightly Rust compiler. First you need to install the `cargo-xbuild` and `bootimage` tools:
 
 ```
-> cargo install bootimage --version "^0.5.0"
+cargo install cargo-xbuild bootimage
 ```
 
-```
-> bootimage build
-```
-
-## Run via QEMU
+Then you can build the project by running:
 
 ```
-> bootimage run
+cargo xbuild
 ```
+
+To create a bootable disk image, run:
+
+```
+cargo bootimage
+```
+
+This creates a bootable disk image in the `target/x86_64-blog_os/debug` directory.
+
+Please file an issue if you have any problems.
+
+## Running
+
+You can run the disk image in [QEMU] through:
+
+[QEMU]: https://www.qemu.org/
+
+```
+cargo xrun
+```
+
+Of course [QEMU] needs to be installed for this.
+
+You can also write the image to an USB stick for booting it on a real machine. On Linux, the command for this is:
+
+```
+dd if=target/x86_64-blog_os/debug/bootimage-blog_os.bin of=/dev/sdX && sync
+```
+
+Where `sdX` is the device name of your USB stick. **Be careful** to choose the correct device name, because everything on that device is overwritten.
+
+## Testing
+
+To run the unit and integration tests, execute `cargo xtest`.
+
+## License
+
+Licensed under either of
+
+- Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or
+  http://www.apache.org/licenses/LICENSE-2.0)
+- MIT license ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
+
+at your option.
+
+Note that this only applies to this git branch, other branches might be licensed differently.
+
+### Contribution
+
+Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in the work by you, as defined in the Apache-2.0 license, shall be dual licensed as above, without any additional terms or conditions.

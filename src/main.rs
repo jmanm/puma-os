@@ -1,10 +1,42 @@
-#![cfg_attr(not(test), no_std)]
-#![cfg_attr(not(test), no_main)]
-#![cfg_attr(test, allow(dead_code, unused_macros, unused_imports))]
+#![no_std]
+#![no_main]
+#![feature(custom_test_frameworks)]
+#![test_runner(puma_os::test_runner)]
+#![reexport_test_harness_main = "test_main"]
 
-use core::panic::PanicInfo;
 use puma_os::println;
+use bootloader::{entry_point, BootInfo};
+use core::panic::PanicInfo;
 
+entry_point!(kernel_main);
+
+fn kernel_main(boot_info: &'static BootInfo) -> ! {
+    use puma_os::memory::{self, BootInfoFrameAllocator};
+    use x86_64::{structures::paging::Page, VirtAddr};
+
+    println!("Hello World{}", "!");
+    puma_os::init();
+
+    let phys_mem_offset = VirtAddr::new(boot_info.physical_memory_offset);
+    let mut mapper = unsafe { memory::init(phys_mem_offset) };
+    let mut frame_allocator = unsafe { BootInfoFrameAllocator::init(&boot_info.memory_map) };
+
+    // map an unused page
+    let page = Page::containing_address(VirtAddr::new(0xdeadbeaf000));
+    memory::create_example_mapping(page, &mut mapper, &mut frame_allocator);
+
+    // write the string `New!` to the screen through the new mapping
+    let page_ptr: *mut u64 = page.start_address().as_mut_ptr();
+    unsafe { page_ptr.offset(400).write_volatile(0x_f021_f077_f065_f04e) };
+
+    #[cfg(test)]
+    test_main();
+
+    println!("It did not crash!");
+    puma_os::hlt_loop();
+}
+
+/// This function is called on panic.
 #[cfg(not(test))]
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
@@ -12,29 +44,8 @@ fn panic(info: &PanicInfo) -> ! {
     puma_os::hlt_loop();
 }
 
-#[cfg(not(test))]
-#[no_mangle]
-pub extern "C" fn _start() -> ! {
-    use puma_os::interrupts::PICS;
-    let maj_ver = 0;
-    let min_ver = 1;
-    let patch_ver = 0;
-
-    println!("Welcome to Puma OS");
-    println!("Version {}.{}.{}", maj_ver, min_ver, patch_ver);
-
-    puma_os::gdt::init();
-    puma_os::interrupts::init_idt();
-    unsafe { PICS.lock().initialize() };
-    x86_64::instructions::interrupts::enable();
-
-    use puma_os::memory::{self, translate_addr};
-    const L4_TABLE_ADDR: usize = 0o177777_777_777_777_777_0000;
-    let rpt = unsafe { memory::init(L4_TABLE_ADDR) };
-    println!("0xb8000 -> {:?}", translate_addr(0xb8000, &rpt));
-    println!("0x20010a -> {:?}", translate_addr(0x20010a, &rpt));
-    println!("0x57ac001ffe48 -> {:?}", translate_addr(0x57ac001ffe48, &rpt));
-    println!("0x1234567890 -> {:?}", translate_addr(0x1234567890, &rpt));
-
-    puma_os::hlt_loop();
+#[cfg(test)]
+#[panic_handler]
+fn panic(info: &PanicInfo) -> ! {
+    puma_os::test_panic_handler(info)
 }
