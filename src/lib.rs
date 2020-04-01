@@ -6,6 +6,7 @@ pub mod interrupts;
 pub mod memory;
 pub mod serial;
 pub mod vga_buffer;
+pub mod green_thread;
 
 pub unsafe fn exit_qemu() {
     use x86_64::instructions::port::Port;
