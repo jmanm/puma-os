@@ -1,0 +1,15 @@
+#![test_runner(puma_os::test_runner)]
+
+use puma_os::{println, serial_print, serial_println};
+
+#[panic_handler]
+fn panic(info: &PanicInfo) -> ! {
+    puma_os::test_panic_handler(info)
+}
+
+#[test_case]
+fn test_println() {
+    serial_print!("test_println... ");
+    println!("test_println output");
+    serial_println("[ok]");
+}
