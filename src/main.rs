@@ -24,6 +24,8 @@ fn panic(info: &PanicInfo) -> ! {
 pub extern "C" fn _start() -> ! {
     println!("H3ll0 from Puma OS");
 
+    puma_os::init();
+
     #[cfg(test)]
     test_main();
 
