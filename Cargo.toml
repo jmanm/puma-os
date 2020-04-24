@@ -28,6 +28,6 @@ panic = "abort"
 [profile.release]
 panic = "abort"
 
-# [[test]]
-# name = "should_panic"
-# harness = false
+[[test]]
+name = "should_panic"
+harness = false
