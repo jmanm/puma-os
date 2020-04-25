@@ -13,8 +13,10 @@ pub mod vga_buffer;
 use core::panic::PanicInfo;
 
 pub fn init() {
-    gdt::init();
-    interrupts::init_idt();
+    gdt::init(); //global descriptor table
+    interrupts::init_idt(); //interrupt descriptor table
+    unsafe { interrupts::PICS.lock().initialize() }; //PICS controller
+    x86_64::instructions::interrupts::enable();
 }
 
 pub fn test_runner(tests: &[&dyn Fn()]) {
