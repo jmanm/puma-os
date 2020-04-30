@@ -1,8 +1,10 @@
 use lazy_static::lazy_static;
 use pic8259_simple::ChainedPics;
 use spin;
-use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame};
-use crate::{gdt, print, println};
+use x86_64::structures::idt::{
+    InterruptDescriptorTable, InterruptStackFrame, PageFaultErrorCode
+};
+use crate::{gdt, hlt_loop, print, println};
 #[cfg(test)] use crate::{serial_print, serial_println};
 
 pub const PIC_1_OFFSET: u8 = 32;
@@ -22,6 +24,8 @@ lazy_static! {
 
         idt[InterruptIndex::Keyboard.as_usize()]
             .set_handler_fn(keyboard_interrupt_handler);
+
+        idt.page_fault.set_handler_fn(page_fault_handler);
 
         idt[InterruptIndex::Timer.as_usize()]
             .set_handler_fn(timer_interrupt_handler);
@@ -98,10 +102,23 @@ extern "x86-interrupt" fn keyboard_interrupt_handler(
     }
 }
 
+extern "x86-interrupt" fn page_fault_handler(
+    stack_frame: &mut InterruptStackFrame,
+    error_code: PageFaultErrorCode)
+{
+    use x86_64::registers::control::Cr2;
+
+    println!("PAGE FAULT");
+    println!("Accessed Address:  {:?}", Cr2::read());
+    println!("Error Code:  {:?}", error_code);
+    println!("{:#?}", stack_frame);
+    hlt_loop();
+}
+
 extern "x86-interrupt" fn timer_interrupt_handler(
     _stack_frame: &mut InterruptStackFrame)
 {
-    print!(".");
+    // print!(".");
 
     unsafe {
         PICS.lock().notify_end_of_interrupt(InterruptIndex::Timer.as_u8());
