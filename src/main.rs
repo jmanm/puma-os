@@ -4,6 +4,9 @@
 #![test_runner(puma_os::test_runner)]
 #![reexport_test_harness_main = "test_main"]
 
+extern crate alloc;
+
+use alloc::boxed::Box;
 use core::panic::PanicInfo;
 use bootloader::{BootInfo, entry_point};
 use puma_os::println;
@@ -28,24 +31,37 @@ fn kernel_main(boot_info: &'static BootInfo) -> ! {
 
     puma_os::init();
 
+    use alloc::{vec, vec::Vec, rc::Rc};
     use x86_64::VirtAddr;
-    use x86_64::structures::paging::Page;
-    use puma_os::memory;
+    use puma_os::allocator;
+    use puma_os::memory::{self, BootInfoFrameAllocator};
 
     let phys_mem_offset = VirtAddr::new(boot_info.physical_memory_offset);
     let mut mapper = unsafe { memory::init(phys_mem_offset) };
     let mut frame_allocator = unsafe {
-        memory::BootInfoFrameAllocator::init(&boot_info.memory_map)
+        BootInfoFrameAllocator::init(&boot_info.memory_map)
     };
 
-    let page = Page::containing_address(VirtAddr::new(0xdeadbeaf000));
-    memory::create_example_mapping(page, &mut mapper, &mut frame_allocator);
+    allocator::init_heap(&mut mapper, &mut frame_allocator)
+        .expect("heap initialization failed");
 
-    let page_ptr: *mut u64 = page.start_address().as_mut_ptr();
-    unsafe { page_ptr.offset(400).write_volatile(0x_f021_f077_f065_f04e) };
+    let x = Box::new(33);
+    println!("x at {:p}", x);
 
-    #[cfg(test)]
-    test_main();
+    let mut vec = Vec::new();
+    for i in 0..500 {
+        vec.push(i);
+    }
+    println!("vec at {:p}", vec.as_slice());
+
+    let rc = Rc::new(vec![1, 2, 3]);
+    let clone = rc.clone();
+    println!("ref count is {}", Rc::strong_count(&clone));
+
+    core::mem::drop(rc);
+    println!("ref count is {}", Rc::strong_count(&clone));
+
+    #[cfg(test)] test_main();
 
     puma_os::hlt_loop();
 }
