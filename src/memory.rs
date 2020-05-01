@@ -1,5 +1,9 @@
+
+use bootloader::bootinfo::{MemoryMap, MemoryRegionType};
 use x86_64::{PhysAddr, VirtAddr};
-use x86_64::structures::paging::{OffsetPageTable, PageTable};
+use x86_64::structures::paging::{
+    OffsetPageTable, Page, PageTable, PhysFrame, Mapper, Size4KiB, FrameAllocator, UnusedPhysFrame
+};
 use x86_64::registers::control::Cr3;
 
 pub unsafe fn init(physical_memory_offset: VirtAddr) -> OffsetPageTable<'static> {
@@ -19,36 +23,51 @@ unsafe fn active_level_4_table(
     &mut *page_table_ptr
 }
 
-pub unsafe fn translate_addr_naive(addr: VirtAddr,
-    physical_memory_offset: VirtAddr) -> Option<PhysAddr>
-{
-    translate_addr_inner(addr, physical_memory_offset)
+pub struct BootInfoFrameAllocator {
+    memory_map: &'static MemoryMap,
+    next: usize,
 }
 
-fn translate_addr_inner(addr: VirtAddr,
-    physical_memory_offset: VirtAddr) -> Option<PhysAddr>
-{
-    use x86_64::structures::paging::page_table::FrameError;
-
-    let (level_4_table_frame, _) = Cr3::read();
-
-    let table_indexes = [
-        addr.p4_index(), addr.p3_index(), addr.p2_index(), addr.p1_index()
-    ];
-    let mut frame = level_4_table_frame;
-
-    for &index in &table_indexes {
-        let virt = physical_memory_offset + frame.start_address().as_u64();
-        let table_ptr: *const PageTable = virt.as_ptr();
-        let table = unsafe { &*table_ptr };
-
-        let entry = &table[index];
-        frame = match entry.frame() {
-            Ok(frame) => frame,
-            Err(FrameError::FrameNotPresent) => return None,
-            Err(FrameError::HugeFrame) => panic!("huge pages not supported"),
-        };
+impl BootInfoFrameAllocator {
+    pub unsafe fn init(memory_map: &'static MemoryMap) -> Self {
+        BootInfoFrameAllocator {
+            memory_map,
+            next: 0,
+        }
     }
 
-    Some(frame.start_address() + u64::from(addr.page_offset()))
+    fn usable_frames(&self) -> impl Iterator<Item = UnusedPhysFrame> {
+        let regions = self.memory_map.iter();
+        let usable_regions = regions
+            .filter(|r| r.region_type == MemoryRegionType::Usable);
+        let addr_ranges = usable_regions
+            .map(|r| r.range.start_addr()..r.range.end_addr());
+        let frame_addresses = addr_ranges.flat_map(|r| r.step_by(4096));
+        let frames = frame_addresses
+            .map(|addr| PhysFrame::containing_address(PhysAddr::new(addr)));
+        frames.map(|f| unsafe { UnusedPhysFrame::new(f) })
+    }
+}
+
+unsafe impl FrameAllocator<Size4KiB> for BootInfoFrameAllocator {
+    fn allocate_frame(&mut self) -> Option<UnusedPhysFrame> {
+        let frame = self.usable_frames().nth(self.next);
+        self.next += 1;
+        frame
+    }
+}
+
+pub fn create_example_mapping(
+    page: Page,
+    mapper: &mut OffsetPageTable,
+    frame_allocator: &mut impl FrameAllocator<Size4KiB>)
+{
+    use x86_64::structures::paging::PageTableFlags as Flags;
+
+    let frame = PhysFrame::containing_address(PhysAddr::new(0xb8000));
+    let unused_frame = unsafe { UnusedPhysFrame::new(frame) };
+    let flags = Flags::PRESENT | Flags::WRITABLE;
+
+    let result = mapper.map_to(page, unused_frame, flags, frame_allocator);
+    result.expect("map_to failed").flush();
 }
