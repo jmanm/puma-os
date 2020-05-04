@@ -80,3 +80,19 @@ fn many_boxes_long_lived() {
     assert_eq!(*long_lived, 1);
     serial_println!("[ok]");
 }
+
+#[test_case]
+fn fragmentation() {
+    serial_print!("fragmentation... ");
+    for i in 0..HEAP_SIZE {
+        let x = Box::new(i);
+        assert_eq!(*x, i);
+    }
+    let mut vec = Vec::new();
+    let n = 1000;
+    for i in 0..n {
+        vec.push(i);
+    }
+    assert_eq!(vec.len(), n);
+    serial_println!("[ok]");
+}

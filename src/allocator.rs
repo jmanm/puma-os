@@ -1,4 +1,5 @@
 pub mod bump;
+pub mod linked_list;
 
 // use linked_list_allocator::LockedHeap;
 use x86_64::{
@@ -7,13 +8,14 @@ use x86_64::{
     },
     VirtAddr,
 };
-use bump::BumpAllocator;
+// use bump::BumpAllocator;
+use linked_list::LinkedListAllocator;
 
 pub const HEAP_START: usize = 0x_4444_4444_0000;
 pub const HEAP_SIZE: usize = 100 * 1024;
 
 #[global_allocator]
-static ALLOCATOR: Locked<BumpAllocator> = Locked::new(BumpAllocator::new());
+static ALLOCATOR: Locked<LinkedListAllocator> = Locked::new(LinkedListAllocator::new());
 // static ALLOCATOR: LockedHeap = LockedHeap::empty();
 
 pub struct Locked<A> {
