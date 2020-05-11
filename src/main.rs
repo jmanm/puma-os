@@ -45,22 +45,6 @@ fn kernel_main(boot_info: &'static BootInfo) -> ! {
     allocator::init_heap(&mut mapper, &mut frame_allocator)
         .expect("heap initialization failed");
 
-    let x = Box::new(33);
-    println!("x at {:p}", x);
-
-    let mut vec = Vec::new();
-    for i in 0..500 {
-        vec.push(i);
-    }
-    println!("vec at {:p}", vec.as_slice());
-
-    let rc = Rc::new(vec![1, 2, 3]);
-    let clone = rc.clone();
-    println!("ref count is {}", Rc::strong_count(&clone));
-
-    core::mem::drop(rc);
-    println!("ref count is {}", Rc::strong_count(&clone));
-
     #[cfg(test)] test_main();
 
     puma_os::hlt_loop();

@@ -1,4 +1,5 @@
 pub mod bump;
+pub mod fixed_size_block;
 pub mod linked_list;
 
 // use linked_list_allocator::LockedHeap;
@@ -9,13 +10,14 @@ use x86_64::{
     VirtAddr,
 };
 // use bump::BumpAllocator;
-use linked_list::LinkedListAllocator;
+use fixed_size_block::FixedSizeBlockAllocator;
+// use linked_list::LinkedListAllocator;
 
 pub const HEAP_START: usize = 0x_4444_4444_0000;
 pub const HEAP_SIZE: usize = 100 * 1024;
 
 #[global_allocator]
-static ALLOCATOR: Locked<LinkedListAllocator> = Locked::new(LinkedListAllocator::new());
+static ALLOCATOR: Locked<FixedSizeBlockAllocator> = Locked::new(FixedSizeBlockAllocator::new());
 // static ALLOCATOR: LockedHeap = LockedHeap::empty();
 
 pub struct Locked<A> {
@@ -35,23 +37,22 @@ impl<A> Locked<A> {
 }
 
 fn align_up(addr: usize, align: usize) -> usize {
-    let remainder = addr % align;
-    if remainder == 0 {
-        addr
-    } else {
-        addr - remainder + align
-    }
+    // easier to understand impl
+    // let remainder = addr % align;
+    // if remainder == 0 {
+    //     addr
+    // } else {
+    //     addr - remainder + align
+    // }
 
-    /* TODO - faster implementation:
-     * https://os.phil-opp.com/allocator-designs/
-     * (addr + align - 1) & !(align - 1) */
+    // fast implementation:  https://os.phil-opp.com/allocator-designs/
+    (addr + align - 1) & !(align - 1)
 }
 
 pub fn init_heap(
     mapper: &mut impl Mapper<Size4KiB>,
     frame_allocator: &mut impl FrameAllocator<Size4KiB>,
-) -> Result<(), MapToError<Size4KiB>>
-{
+) -> Result<(), MapToError<Size4KiB>> {
     let page_range = {
         let heap_start = VirtAddr::new(HEAP_START as u64);
         let heap_end = heap_start + HEAP_SIZE - 1u64;

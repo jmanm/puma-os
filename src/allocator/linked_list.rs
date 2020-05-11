@@ -1,7 +1,7 @@
 use alloc::alloc::{GlobalAlloc, Layout};
 use core::{mem, ptr};
 use super::{align_up, Locked};
-use crate::{serial_println};
+// use crate::{serial_println};
 
 struct ListNode {
     size: usize,
@@ -107,14 +107,14 @@ unsafe impl GlobalAlloc for Locked<LinkedListAllocator> {
             }
             alloc_start as *mut u8
         } else {
-            serial_println!("couldn't find any region of {} bytes", size);
-            let mut i = 0;
-            let mut item = &allocator.head.next;
-            while let Some(node) = item {
-                i += 1;
-                serial_println!("Node {}: {} bytes", i, node.size);
-                item = &node.next;
-            }
+            // serial_println!("couldn't find any region of {} bytes", size);
+            // let mut i = 0;
+            // let mut item = &allocator.head.next;
+            // while let Some(node) = item {
+            //     i += 1;
+            //     serial_println!("Node {}: {} bytes", i, node.size);
+            //     item = &node.next;
+            // }
             ptr::null_mut()
         }
     }
