@@ -6,7 +6,6 @@
 
 extern crate alloc;
 
-use alloc::boxed::Box;
 use core::panic::PanicInfo;
 use bootloader::{BootInfo, entry_point};
 use puma_os::println;
@@ -31,7 +30,6 @@ fn kernel_main(boot_info: &'static BootInfo) -> ! {
 
     puma_os::init();
 
-    use alloc::{vec, vec::Vec, rc::Rc};
     use x86_64::VirtAddr;
     use puma_os::allocator;
     use puma_os::memory::{self, BootInfoFrameAllocator};
@@ -45,31 +43,22 @@ fn kernel_main(boot_info: &'static BootInfo) -> ! {
     allocator::init_heap(&mut mapper, &mut frame_allocator)
         .expect("heap initialization failed");
 
+    use puma_os::task::{Task, simple_executor::SimpleExecutor};
+
+    let mut executor = SimpleExecutor::new();
+    executor.spawn(Task::new(example_task()));
+    executor.run();
+
     #[cfg(test)] test_main();
 
     puma_os::hlt_loop();
 }
 
-// fn print_page_table_contents() {
-//     let l4_table = unsafe { active_level_4_table(phys_mem_offset) };
+async fn async_number() -> u32 {
+    322
+}
 
-//     println!("{:?}", phys_mem_offset);
-//     for (i, entry) in l4_table.iter().enumerate() {
-//         if !entry.is_unused() {
-//             println!("L4 entry {}: {:?}", i, entry);
-
-//             let phys = entry.frame().unwrap().start_address();
-//             let virt = phys.as_u64() + boot_info.physical_memory_offset;
-//             let ptr = VirtAddr::new(virt).as_mut_ptr();
-
-//             use x86_64::structures::paging::PageTable;
-//             let l3_table: &PageTable = unsafe { &*ptr };
-
-//             for (i, entry) in l3_table.iter().enumerate() {
-//                 if !entry.is_unused() {
-//                     println!("  L3 entry {}: {:?}", i, entry);
-//                 }
-//             }
-//         }
-//     }
-// }
+async fn example_task() {
+    let number = async_number().await;
+    println!("async number: {}", number);
+}
