@@ -9,6 +9,7 @@ extern crate alloc;
 use core::panic::PanicInfo;
 use bootloader::{BootInfo, entry_point};
 use puma_os::println;
+use puma_os::task::keyboard;
 
 entry_point!(kernel_main);
 
@@ -47,6 +48,7 @@ fn kernel_main(boot_info: &'static BootInfo) -> ! {
 
     let mut executor = SimpleExecutor::new();
     executor.spawn(Task::new(example_task()));
+    executor.spawn(Task::new(keyboard::print_keypresses()));
     executor.run();
 
     #[cfg(test)] test_main();
