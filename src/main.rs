@@ -44,16 +44,14 @@ fn kernel_main(boot_info: &'static BootInfo) -> ! {
     allocator::init_heap(&mut mapper, &mut frame_allocator)
         .expect("heap initialization failed");
 
-    use puma_os::task::{Task, simple_executor::SimpleExecutor};
+    use puma_os::task::{Task, executor::Executor};
 
-    let mut executor = SimpleExecutor::new();
+    let mut executor = Executor::new();
     executor.spawn(Task::new(example_task()));
     executor.spawn(Task::new(keyboard::print_keypresses()));
     executor.run();
 
     #[cfg(test)] test_main();
-
-    puma_os::hlt_loop();
 }
 
 async fn async_number() -> u32 {

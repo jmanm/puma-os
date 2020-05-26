@@ -4,7 +4,7 @@ use spin;
 use x86_64::structures::idt::{
     InterruptDescriptorTable, InterruptStackFrame, PageFaultErrorCode
 };
-use crate::{gdt, hlt_loop, print, println};
+use crate::{gdt, hlt_loop, println};
 #[cfg(test)] use crate::{serial_print, serial_println};
 
 pub const PIC_1_OFFSET: u8 = 32;
