@@ -8,6 +8,10 @@ https://os.phil-opp.com/
 
 * Rustup
 * QEMU
+* rust-src
+* llvm-tools-preview
+* cargo-xbuild
+* bootimage
 
 ## Make sure the compiler is set to the 'nightly' version
 
@@ -17,9 +21,12 @@ https://os.phil-opp.com/
 
 ## Building
 
-bootimage must be installed first
+Install the prerequisites
 
 ```
+> rustup component add rust-src
+> rustup component add llvm-tools-preview
+> cargo install cargo-xbuild
 > cargo install bootimage --version "^0.8.0"
 ```
 
